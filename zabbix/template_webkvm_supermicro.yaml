@@ -25,8 +25,8 @@ zabbix_export:
 
         Source: https://github.com/N1k0droid/supermicro-x9-webkvm
       vendor:
-        name: webkvm
-        version: 7.4-0
+        name: N1k0droid
+        version: 1.0-0
       groups:
         - name: Templates/Server hardware
       items:
@@ -47,6 +47,8 @@ zabbix_export:
           tags:
             - tag: component
               value: raw
+            - tag: template
+              value: supermicro-x9-webkvm
         - uuid: 4eea9b39936046b888304925cfa256d8
           name: 'BMC: reachable over IPMI'
           type: DEPENDENT
@@ -70,6 +72,8 @@ zabbix_export:
           tags:
             - tag: component
               value: health
+            - tag: template
+              value: supermicro-x9-webkvm
           triggers:
             - uuid: 8f878f4338a647d7bdb3d7a2f9cea34e
               expression: 'last(/Supermicro BMC by webkvm HTTP/webkvm.bmc.up)=0'
@@ -79,6 +83,8 @@ zabbix_export:
               tags:
                 - tag: scope
                   value: availability
+                - tag: template
+                  value: supermicro-x9-webkvm
             - uuid: 17895dd963d64fad88e985fd513d77b7
               expression: 'nodata(/Supermicro BMC by webkvm HTTP/webkvm.bmc.up,{$WEBKVM.NODATA})=1'
               name: 'webkvm: no data for {$WEBKVM.NODATA}'
@@ -87,6 +93,8 @@ zabbix_export:
               tags:
                 - tag: scope
                   value: availability
+                - tag: template
+                  value: supermicro-x9-webkvm
         - uuid: 6ac0bad8bf8940eaacb797932ffeb849
           name: 'Server: power'
           type: DEPENDENT
@@ -111,6 +119,8 @@ zabbix_export:
           tags:
             - tag: component
               value: power
+            - tag: template
+              value: supermicro-x9-webkvm
           triggers:
             - uuid: ff24b8ed3afd4cbe93d99205d1a92eb3
               expression: 'last(/Supermicro BMC by webkvm HTTP/webkvm.power.on)=0'
@@ -123,6 +133,8 @@ zabbix_export:
               tags:
                 - tag: scope
                   value: availability
+                - tag: template
+                  value: supermicro-x9-webkvm
         - uuid: d9a7dee77d994029ba4dc334ff569193
           name: 'BMC: event log (SEL) entries'
           type: DEPENDENT
@@ -137,6 +149,8 @@ zabbix_export:
           tags:
             - tag: component
               value: sel
+            - tag: template
+              value: supermicro-x9-webkvm
           triggers:
             - uuid: fe807084788c4ba59ea7278d5c96c554
               expression: 'last(/Supermicro BMC by webkvm HTTP/webkvm.sel.count)>last(/Supermicro BMC by webkvm HTTP/webkvm.sel.count,#2)'
@@ -147,6 +161,8 @@ zabbix_export:
               tags:
                 - tag: scope
                   value: notice
+                - tag: template
+                  value: supermicro-x9-webkvm
         - uuid: e19a2dd93b4549e1b93a85a8226e1605
           name: 'Chassis: intrusion'
           type: DEPENDENT
@@ -171,6 +187,8 @@ zabbix_export:
           tags:
             - tag: component
               value: chassis
+            - tag: template
+              value: supermicro-x9-webkvm
           triggers:
             - uuid: f8fc5400e3434795887f86bd8bcccc92
               expression: 'last(/Supermicro BMC by webkvm HTTP/webkvm.chassis.intrusion)=1'
@@ -180,6 +198,8 @@ zabbix_export:
               tags:
                 - tag: scope
                   value: security
+                - tag: template
+                  value: supermicro-x9-webkvm
         - uuid: 25d0b786cd4f44f99527cf1d58f22ebc
           name: 'Chassis: reported faults'
           type: DEPENDENT
@@ -203,6 +223,8 @@ zabbix_export:
           tags:
             - tag: component
               value: chassis
+            - tag: template
+              value: supermicro-x9-webkvm
           triggers:
             - uuid: e818ec8bf05747e195bf035faf718779
               expression: 'last(/Supermicro BMC by webkvm HTTP/webkvm.chassis.faults)>0'
@@ -212,6 +234,8 @@ zabbix_export:
               tags:
                 - tag: scope
                   value: availability
+                - tag: template
+                  value: supermicro-x9-webkvm
         - uuid: ed153ae2f367441ea42c23c4db2a38d2
           name: 'webkvm: IPMI polling duration'
           type: DEPENDENT
@@ -228,6 +252,8 @@ zabbix_export:
           tags:
             - tag: component
               value: health
+            - tag: template
+              value: supermicro-x9-webkvm
       discovery_rules:
         - uuid: 9f511bd4bc564dbd9f93f67ceb0117cb
           name: 'Sensor discovery'
@@ -265,6 +291,8 @@ zabbix_export:
                   value: '{#TYPE}'
                 - tag: sensor
                   value: '{#SENSOR}'
+                - tag: template
+                  value: supermicro-x9-webkvm
               trigger_prototypes:
                 - uuid: af1754f1bc804266b10b33a653b0570b
                   expression: 'min(/Supermicro BMC by webkvm HTTP/webkvm.sensor.value[{#SENSOR}],5m)>{$WEBKVM.TEMP.WARN:"{#SENSOR}"}'
@@ -275,6 +303,8 @@ zabbix_export:
                   tags:
                     - tag: scope
                       value: performance
+                    - tag: template
+                      value: supermicro-x9-webkvm
                 - uuid: 6ee4b138c1ba45ad815cbee126a263fe
                   expression: 'nodata(/Supermicro BMC by webkvm HTTP/webkvm.sensor.value[{#SENSOR}],{$WEBKVM.NODATA})=1'
                   name: '{#SENSOR}: no reading for {$WEBKVM.NODATA}'
@@ -288,6 +318,8 @@ zabbix_export:
                   tags:
                     - tag: scope
                       value: availability
+                    - tag: template
+                      value: supermicro-x9-webkvm
             - uuid: 528c07e94fe14170b1d232051498d56c
               name: '{#SENSOR}: status'
               type: DEPENDENT
@@ -310,6 +342,8 @@ zabbix_export:
                   value: '{#TYPE}'
                 - tag: sensor
                   value: '{#SENSOR}'
+                - tag: template
+                  value: supermicro-x9-webkvm
               trigger_prototypes:
                 - uuid: 812f80963a864fcb94d1a300e7e30300
                   expression: 'last(/Supermicro BMC by webkvm HTTP/webkvm.sensor.status[{#SENSOR}])>=2'
@@ -320,6 +354,8 @@ zabbix_export:
                   tags:
                     - tag: scope
                       value: availability
+                    - tag: template
+                      value: supermicro-x9-webkvm
                 - uuid: 0a2e9333ccfb4a54b7b7f621c91f4bc6
                   expression: 'last(/Supermicro BMC by webkvm HTTP/webkvm.sensor.status[{#SENSOR}])=1'
                   name: '{#SENSOR}: warning threshold exceeded (BMC)'
@@ -332,6 +368,8 @@ zabbix_export:
                   tags:
                     - tag: scope
                       value: performance
+                    - tag: template
+                      value: supermicro-x9-webkvm
           master_item:
             key: webkvm.sensors.get
           preprocessing:
