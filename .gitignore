@@ -1,0 +1,17 @@
+# secrets
+.env
+dev/metrics-token.txt
+
+# local data and builds
+data-local/
+dist/
+.venv/
+__pycache__/
+*.pyc
+
+# noVNC is downloaded at build time (or placed here for local runs)
+webkvm/web/static/novnc/
+
+# screen captures from debugging
+*.bin
+*.png

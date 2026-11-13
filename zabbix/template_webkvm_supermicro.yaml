@@ -1,0 +1,426 @@
+zabbix_export:
+  version: '7.4'
+  template_groups:
+    - uuid: 6dd5a73438e647fcb0b0aed18759d8f8
+      name: Templates/Server hardware
+  templates:
+    - uuid: da820b1324b445b5b78ded2c2ee98bd2
+      template: 'Supermicro BMC by webkvm HTTP'
+      name: 'Supermicro BMC by webkvm HTTP'
+      description: |
+        Monitoring of a Supermicro BMC (X9 / ATEN) through the supermicro-x9-webkvm container.
+
+        webkvm polls the BMC over IPMI and exposes the sensors as JSON on /api/v1/sensors.
+        This template reads that endpoint with a single HTTP agent item and derives everything
+        else with dependent items and LLD, so the Zabbix server does not need to speak IPMI.
+
+        Setup:
+        1. set WEBKVM_METRICS_TOKEN in the container;
+        2. link the template to a host and set the macros {$WEBKVM.URL} (e.g. http://192.168.1.10:8080)
+           and {$WEBKVM.TOKEN}.
+
+        Sensor states use the thresholds configured in the BMC (ok / non-critical / critical /
+        non-recoverable). The extra threshold {$WEBKVM.TEMP.WARN} can be overridden per sensor
+        with a context, e.g. {$WEBKVM.TEMP.WARN:"CPU Temp"}.
+
+        Source: https://github.com/N1k0droid/supermicro-x9-webkvm
+      vendor:
+        name: webkvm
+        version: 7.4-0
+      groups:
+        - name: Templates/Server hardware
+      items:
+        - uuid: 136e4cd394ce4f53b5efbfb56599e7d3
+          name: 'webkvm: sensor readings (JSON)'
+          type: HTTP_AGENT
+          key: webkvm.sensors.get
+          delay: '{$WEBKVM.INTERVAL}'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          description: 'Raw answer of /api/v1/sensors. Master item for all the others.'
+          timeout: 15s
+          url: '{$WEBKVM.URL}/api/v1/sensors'
+          headers:
+            - name: Authorization
+              value: 'Bearer {$WEBKVM.TOKEN}'
+          tags:
+            - tag: component
+              value: raw
+        - uuid: 4eea9b39936046b888304925cfa256d8
+          name: 'BMC: reachable over IPMI'
+          type: DEPENDENT
+          key: webkvm.bmc.up
+          value_type: UNSIGNED
+          description: 'webkvm can query the BMC over IPMI (1) or not (0).'
+          valuemap:
+            name: 'webkvm up'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.up
+            - type: BOOL_TO_DECIMAL
+              parameters:
+                - ''
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1h
+          master_item:
+            key: webkvm.sensors.get
+          tags:
+            - tag: component
+              value: health
+          triggers:
+            - uuid: 8f878f4338a647d7bdb3d7a2f9cea34e
+              expression: 'last(/Supermicro BMC by webkvm HTTP/webkvm.bmc.up)=0'
+              name: 'BMC: unreachable over IPMI'
+              priority: HIGH
+              description: 'webkvm is running but cannot query the BMC (network, credentials or BMC hung).'
+              tags:
+                - tag: scope
+                  value: availability
+            - uuid: 17895dd963d64fad88e985fd513d77b7
+              expression: 'nodata(/Supermicro BMC by webkvm HTTP/webkvm.bmc.up,{$WEBKVM.NODATA})=1'
+              name: 'webkvm: no data for {$WEBKVM.NODATA}'
+              priority: AVERAGE
+              description: 'The webkvm container does not answer or the token is not valid (check the "sensor readings" item).'
+              tags:
+                - tag: scope
+                  value: availability
+        - uuid: 6ac0bad8bf8940eaacb797932ffeb849
+          name: 'Server: power'
+          type: DEPENDENT
+          key: webkvm.power.on
+          value_type: UNSIGNED
+          valuemap:
+            name: 'webkvm power'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.power_on
+              error_handler: DISCARD_VALUE
+            - type: BOOL_TO_DECIMAL
+              parameters:
+                - ''
+              error_handler: DISCARD_VALUE
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1h
+          master_item:
+            key: webkvm.sensors.get
+          tags:
+            - tag: component
+              value: power
+          triggers:
+            - uuid: ff24b8ed3afd4cbe93d99205d1a92eb3
+              expression: 'last(/Supermicro BMC by webkvm HTTP/webkvm.power.on)=0'
+              name: 'Server: powered off'
+              priority: AVERAGE
+              description: 'The BMC reports the server as powered off.'
+              dependencies:
+                - name: 'BMC: unreachable over IPMI'
+                  expression: 'last(/Supermicro BMC by webkvm HTTP/webkvm.bmc.up)=0'
+              tags:
+                - tag: scope
+                  value: availability
+        - uuid: d9a7dee77d994029ba4dc334ff569193
+          name: 'BMC: event log (SEL) entries'
+          type: DEPENDENT
+          key: webkvm.sel.count
+          value_type: UNSIGNED
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.sel_count
+          master_item:
+            key: webkvm.sensors.get
+          tags:
+            - tag: component
+              value: sel
+          triggers:
+            - uuid: fe807084788c4ba59ea7278d5c96c554
+              expression: 'last(/Supermicro BMC by webkvm HTTP/webkvm.sel.count)>last(/Supermicro BMC by webkvm HTTP/webkvm.sel.count,#2)'
+              name: 'BMC: new event log (SEL) entries'
+              priority: INFO
+              manual_close: 'YES'
+              description: 'The BMC logged new hardware events: details in the webkvm dashboard (/api/v1/sel).'
+              tags:
+                - tag: scope
+                  value: notice
+        - uuid: e19a2dd93b4549e1b93a85a8226e1605
+          name: 'Chassis: intrusion'
+          type: DEPENDENT
+          key: webkvm.chassis.intrusion
+          value_type: UNSIGNED
+          valuemap:
+            name: 'webkvm up'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chassis.intrusion
+              error_handler: DISCARD_VALUE
+            - type: BOOL_TO_DECIMAL
+              parameters:
+                - ''
+              error_handler: DISCARD_VALUE
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1h
+          master_item:
+            key: webkvm.sensors.get
+          tags:
+            - tag: component
+              value: chassis
+          triggers:
+            - uuid: f8fc5400e3434795887f86bd8bcccc92
+              expression: 'last(/Supermicro BMC by webkvm HTTP/webkvm.chassis.intrusion)=1'
+              name: 'Chassis: intrusion detected'
+              priority: WARNING
+              manual_close: 'YES'
+              tags:
+                - tag: scope
+                  value: security
+        - uuid: 25d0b786cd4f44f99527cf1d58f22ebc
+          name: 'Chassis: reported faults'
+          type: DEPENDENT
+          key: webkvm.chassis.faults
+          value_type: UNSIGNED
+          description: 'Number of active faults among: power overload, main power fault, power control fault, drives, fans.'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var c = JSON.parse(value).chassis || {};
+                  var keys = ['power_overload', 'main_power_fault', 'power_control_fault', 'drive_fault', 'fan_fault'];
+                  var n = 0;
+                  for (var i = 0; i < keys.length; i++) { if (c[keys[i]] === true) n++; }
+                  return n;
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1h
+          master_item:
+            key: webkvm.sensors.get
+          tags:
+            - tag: component
+              value: chassis
+          triggers:
+            - uuid: e818ec8bf05747e195bf035faf718779
+              expression: 'last(/Supermicro BMC by webkvm HTTP/webkvm.chassis.faults)>0'
+              name: 'Chassis: hardware fault reported by the BMC'
+              priority: HIGH
+              description: 'The BMC reports a power, drive or fan fault: see "Chassis faults" in the webkvm dashboard.'
+              tags:
+                - tag: scope
+                  value: availability
+        - uuid: ed153ae2f367441ea42c23c4db2a38d2
+          name: 'webkvm: IPMI polling duration'
+          type: DEPENDENT
+          key: webkvm.scrape.duration
+          value_type: FLOAT
+          units: s
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.scrape_duration
+              error_handler: DISCARD_VALUE
+          master_item:
+            key: webkvm.sensors.get
+          tags:
+            - tag: component
+              value: health
+      discovery_rules:
+        - uuid: 9f511bd4bc564dbd9f93f67ceb0117cb
+          name: 'Sensor discovery'
+          type: DEPENDENT
+          key: webkvm.sensors.discovery
+          delay: '0'
+          filter:
+            evaltype: AND
+            conditions:
+              - macro: '{#SENSOR}'
+                value: '{$WEBKVM.SENSOR.MATCHES}'
+                formulaid: A
+              - macro: '{#SENSOR}'
+                value: '{$WEBKVM.SENSOR.NOT_MATCHES}'
+                operator: NOT_MATCHES_REGEX
+                formulaid: B
+          lifetime: 7d
+          description: 'Numeric IPMI sensors (temperatures, fans, voltages, ...) present in the BMC.'
+          item_prototypes:
+            - uuid: 551c681671014f27ab77fe951f6f6dcd
+              name: '{#SENSOR}'
+              type: DEPENDENT
+              key: 'webkvm.sensor.value[{#SENSOR}]'
+              value_type: FLOAT
+              units: '{#UNITS}'
+              description: 'Reading of sensor {#SENSOR} ({#TYPE}).'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$.sensors[?(@.name==''{#SENSOR}'')].value.first()'
+              master_item:
+                key: webkvm.sensors.get
+              tags:
+                - tag: component
+                  value: '{#TYPE}'
+                - tag: sensor
+                  value: '{#SENSOR}'
+              trigger_prototypes:
+                - uuid: af1754f1bc804266b10b33a653b0570b
+                  expression: 'min(/Supermicro BMC by webkvm HTTP/webkvm.sensor.value[{#SENSOR}],5m)>{$WEBKVM.TEMP.WARN:"{#SENSOR}"}'
+                  name: '{#SENSOR}: temperature above {$WEBKVM.TEMP.WARN:"{#SENSOR}"} for 5 minutes'
+                  opdata: 'Current: {ITEM.LASTVALUE1}'
+                  priority: WARNING
+                  description: 'Zabbix-side threshold, independent of the BMC ones. Can be overridden per sensor with {$WEBKVM.TEMP.WARN:"sensor name"}.'
+                  tags:
+                    - tag: scope
+                      value: performance
+                - uuid: 6ee4b138c1ba45ad815cbee126a263fe
+                  expression: 'nodata(/Supermicro BMC by webkvm HTTP/webkvm.sensor.value[{#SENSOR}],{$WEBKVM.NODATA})=1'
+                  name: '{#SENSOR}: no reading for {$WEBKVM.NODATA}'
+                  priority: WARNING
+                  description: 'The sensor no longer returns a value (e.g. failed or disconnected fan).'
+                  dependencies:
+                    - name: 'BMC: unreachable over IPMI'
+                      expression: 'last(/Supermicro BMC by webkvm HTTP/webkvm.bmc.up)=0'
+                    - name: 'webkvm: no data for {$WEBKVM.NODATA}'
+                      expression: 'nodata(/Supermicro BMC by webkvm HTTP/webkvm.bmc.up,{$WEBKVM.NODATA})=1'
+                  tags:
+                    - tag: scope
+                      value: availability
+            - uuid: 528c07e94fe14170b1d232051498d56c
+              name: '{#SENSOR}: status'
+              type: DEPENDENT
+              key: 'webkvm.sensor.status[{#SENSOR}]'
+              value_type: UNSIGNED
+              description: 'Sensor status according to the BMC thresholds.'
+              valuemap:
+                name: 'webkvm sensor status'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$.sensors[?(@.name==''{#SENSOR}'')].status_code.first()'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1h
+              master_item:
+                key: webkvm.sensors.get
+              tags:
+                - tag: component
+                  value: '{#TYPE}'
+                - tag: sensor
+                  value: '{#SENSOR}'
+              trigger_prototypes:
+                - uuid: 812f80963a864fcb94d1a300e7e30300
+                  expression: 'last(/Supermicro BMC by webkvm HTTP/webkvm.sensor.status[{#SENSOR}])>=2'
+                  name: '{#SENSOR}: critical threshold exceeded (BMC)'
+                  opdata: 'Value: {?last(/Supermicro BMC by webkvm HTTP/webkvm.sensor.value[{#SENSOR}])} {#UNITS}'
+                  priority: HIGH
+                  description: 'The BMC reports the sensor beyond the critical (or non-recoverable) threshold.'
+                  tags:
+                    - tag: scope
+                      value: availability
+                - uuid: 0a2e9333ccfb4a54b7b7f621c91f4bc6
+                  expression: 'last(/Supermicro BMC by webkvm HTTP/webkvm.sensor.status[{#SENSOR}])=1'
+                  name: '{#SENSOR}: warning threshold exceeded (BMC)'
+                  opdata: 'Value: {?last(/Supermicro BMC by webkvm HTTP/webkvm.sensor.value[{#SENSOR}])} {#UNITS}'
+                  priority: WARNING
+                  description: 'The BMC reports the sensor beyond the non-critical threshold.'
+                  dependencies:
+                    - name: '{#SENSOR}: critical threshold exceeded (BMC)'
+                      expression: 'last(/Supermicro BMC by webkvm HTTP/webkvm.sensor.status[{#SENSOR}])>=2'
+                  tags:
+                    - tag: scope
+                      value: performance
+          master_item:
+            key: webkvm.sensors.get
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var units = {'degrees C': '°C', 'degrees F': '°F', 'RPM': 'RPM', 'Volts': 'V', 'Watts': 'W', 'Amps': 'A'};
+                  var data = JSON.parse(value);
+                  var out = [];
+                  var list = data.sensors || [];
+                  for (var i = 0; i < list.length; i++) {
+                    var s = list[i];
+                    if (!s.numeric) continue;
+                    out.push({
+                      '{#SENSOR}': s.name,
+                      '{#TYPE}': s.type,
+                      '{#UNITS}': units[s.unit] !== undefined ? units[s.unit] : s.unit
+                    });
+                  }
+                  return JSON.stringify(out);
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1h
+          overrides:
+            - name: 'Temperature threshold only for temperature sensors'
+              step: '1'
+              filter:
+                conditions:
+                  - macro: '{#TYPE}'
+                    value: ^temperature$
+                    operator: NOT_MATCHES_REGEX
+                    formulaid: A
+              operations:
+                - operationobject: TRIGGER_PROTOTYPE
+                  operator: LIKE
+                  value: 'temperature above'
+                  discover: NO_DISCOVER
+      tags:
+        - tag: class
+          value: hardware
+        - tag: target
+          value: supermicro
+        - tag: target
+          value: webkvm
+      macros:
+        - macro: '{$WEBKVM.URL}'
+          value: 'http://webkvm:8080'
+          description: 'Base URL of the webkvm container, without a trailing slash.'
+        - macro: '{$WEBKVM.TOKEN}'
+          type: SECRET_TEXT
+          description: 'Value of WEBKVM_METRICS_TOKEN set in the container.'
+        - macro: '{$WEBKVM.INTERVAL}'
+          value: 1m
+          description: 'Polling interval of /api/v1/sensors (webkvm refreshes every IPMI_INTERVAL, 30 s by default).'
+        - macro: '{$WEBKVM.NODATA}'
+          value: 10m
+          description: 'How long without data before the "no data" trigger fires.'
+        - macro: '{$WEBKVM.TEMP.WARN}'
+          value: '75'
+          description: 'Extra warning threshold for temperatures (°C). Use a per-sensor context: {$WEBKVM.TEMP.WARN:"CPU Temp"}.'
+        - macro: '{$WEBKVM.SENSOR.MATCHES}'
+          value: '.*'
+          description: 'Regex: sensors to discover.'
+        - macro: '{$WEBKVM.SENSOR.NOT_MATCHES}'
+          value: CHANGE_IF_NEEDED
+          description: 'Regex: sensors to ignore.'
+      valuemaps:
+        - uuid: 33027d0b3c564fe091a6bf7b3b1977cc
+          name: 'webkvm power'
+          mappings:
+            - value: '0'
+              newvalue: 'Off'
+            - value: '1'
+              newvalue: 'On'
+        - uuid: 40878fc6eea54e76b2482d041159ecb7
+          name: 'webkvm sensor status'
+          mappings:
+            - value: '0'
+              newvalue: ok
+            - value: '1'
+              newvalue: non-critical
+            - value: '2'
+              newvalue: critical
+            - value: '3'
+              newvalue: non-recoverable
+        - uuid: 15f6d1b146224dcbb124ea54ada70510
+          name: 'webkvm up'
+          mappings:
+            - value: '0'
+              newvalue: 'No'
+            - value: '1'
+              newvalue: 'Yes'

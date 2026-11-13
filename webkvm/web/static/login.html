@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-i18n="login.title">webkvm - sign in</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<div class="login-wrap">
+  <form class="login" method="post" action="/login" autocomplete="on">
+    <div class="login-head">
+      <h1>webkvm</h1>
+      <button type="button" class="lang-btn" id="lang">IT</button>
+    </div>
+    <p data-i18n="login.subtitle">KVM console and BMC statistics</p>
+    <label for="user" data-i18n="login.user">User</label>
+    <input id="user" name="user" autocomplete="username" required autofocus>
+    <label for="password" data-i18n="login.password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required>
+    <button class="btn-primary" type="submit" data-i18n="login.submit">Sign in</button>
+    <div class="err" id="err" role="alert"></div>
+  </form>
+</div>
+<script src="/static/i18n.js"></script>
+<script src="/static/login.js"></script>
+</body>
+</html>

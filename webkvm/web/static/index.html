@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>webkvm</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<header class="top">
+  <div class="brand">webkvm <small id="host"></small></div>
+  <span class="pill" id="bmc-pill">BMC</span>
+  <span class="pill" id="power-pill" data-i18n="top.power_pill">Power</span>
+  <div class="spacer"></div>
+  <div class="actions">
+    <a class="btn btn-primary" href="/kvm" target="_blank" rel="noopener" data-i18n="top.open_kvm">Open KVM console</a>
+    <div class="menu" id="power-menu" hidden>
+      <button type="button" id="power-btn" aria-haspopup="true" aria-expanded="false" data-i18n="top.power_menu">Power ▾</button>
+      <div class="menu-list" role="menu">
+        <button type="button" data-action="on" role="menuitem" data-i18n="power.on">Power on</button>
+        <button type="button" data-action="soft" role="menuitem" data-i18n="power.soft">ACPI shutdown (soft)</button>
+        <button type="button" data-action="reset" role="menuitem" class="btn-danger" data-i18n="power.reset">Reset</button>
+        <button type="button" data-action="cycle" role="menuitem" class="btn-danger" data-i18n="power.cycle">Power cycle</button>
+        <button type="button" data-action="off" role="menuitem" class="btn-danger" data-i18n="power.off">Power off (forced)</button>
+      </div>
+    </div>
+    <button type="button" class="lang-btn" id="lang">IT</button>
+    <form method="post" action="/logout"><button type="submit" data-i18n="top.logout">Log out</button></form>
+  </div>
+</header>
+
+<main>
+  <section class="panel">
+    <h2><span data-i18n="sec.system">System</span> <span class="right hint" id="updated"></span></h2>
+    <div class="facts" id="facts"></div>
+  </section>
+
+  <section class="panel">
+    <h2 data-i18n="sec.sensors">Sensors</h2>
+    <div class="groups" id="sensors"><div class="empty" data-i18n="sensors.waiting">Waiting for the first IPMI reading…</div></div>
+  </section>
+
+  <section class="panel">
+    <h2 data-i18n="sec.history">History</h2>
+    <div class="chart-head">
+      <select id="chart-sensor" data-i18n-aria="chart.sensor" aria-label="Sensor"></select>
+      <div class="seg" id="chart-range">
+        <button type="button" data-range="3600" class="active">1 h</button>
+        <button type="button" data-range="21600">6 h</button>
+        <button type="button" data-range="86400">24 h</button>
+        <button type="button" data-range="604800" data-i18n="range.7d">7 d</button>
+      </div>
+    </div>
+    <div class="chart-tip" id="chart-tip"></div>
+    <div id="chart"></div>
+  </section>
+
+  <section class="panel">
+    <h2><span data-i18n="sec.sel">Event log (SEL)</span> <span class="right hint" id="sel-count"></span></h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th data-i18n="sel.date">Date</th><th data-i18n="sel.time">Time</th>
+          <th data-i18n="sel.sensor">Sensor</th><th data-i18n="sel.event">Event</th><th data-i18n="sel.state">State</th></tr></thead>
+        <tbody id="sel"><tr><td colspan="6" class="empty" data-i18n="sel.loading">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<dialog id="confirm">
+  <h3 id="confirm-title"></h3>
+  <p id="confirm-text"></p>
+  <div class="row">
+    <button type="button" id="confirm-no" data-i18n="dlg.cancel">Cancel</button>
+    <button type="button" id="confirm-yes" class="btn-danger solid" data-i18n="dlg.confirm">Confirm</button>
+  </div>
+</dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="/static/i18n.js"></script>
+<script src="/static/chart.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

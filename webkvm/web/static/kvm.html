@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-i18n="kvmp.title">webkvm · console</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+</head>
+<body class="kvm">
+<div class="kvm-bar">
+  <a class="btn" href="/">← Dashboard</a>
+  <span class="status" id="status"></span>
+  <div class="spacer"></div>
+  <button type="button" id="cad" data-i18n-title="kvmp.cad_title" data-i18n="kvmp.cad">Ctrl+Alt+Del</button>
+  <div class="menu" id="keys-menu">
+    <button type="button" id="keys-btn" aria-haspopup="true" data-i18n="kvmp.keys">Keys ▾</button>
+    <div class="menu-list" role="menu">
+      <button type="button" data-keys="ctrl+alt+bksp">Ctrl+Alt+Backspace</button>
+      <button type="button" data-keys="ctrl+alt+f1">Ctrl+Alt+F1</button>
+      <button type="button" data-keys="ctrl+alt+f2">Ctrl+Alt+F2</button>
+      <button type="button" data-keys="ctrl+alt+f7">Ctrl+Alt+F7</button>
+      <button type="button" data-keys="f2" data-i18n="kvmp.key.f2">F2 (BIOS setup)</button>
+      <button type="button" data-keys="del" data-i18n="kvmp.key.del">Del (BIOS setup)</button>
+      <button type="button" data-keys="f11" data-i18n="kvmp.key.f11">F11 (boot menu)</button>
+      <button type="button" data-keys="f12" data-i18n="kvmp.key.f12">F12 (network boot)</button>
+      <button type="button" data-keys="win" data-i18n="kvmp.key.win">Windows key</button>
+      <button type="button" data-keys="prtsc" data-i18n="kvmp.key.prtsc">Print Screen</button>
+    </div>
+  </div>
+  <button type="button" id="scale" data-i18n-title="kvmp.scale_title" data-i18n="kvmp.fit">Fit</button>
+  <button type="button" id="full" data-i18n="kvmp.full">Full screen</button>
+  <button type="button" id="reconnect" data-i18n="kvmp.reconnect">Reconnect</button>
+  <button type="button" class="lang-btn" id="lang">IT</button>
+</div>
+<div id="screen">
+  <div class="overlay" id="overlay">
+    <div class="box">
+      <h3 id="ov-title"></h3>
+      <p id="ov-text"></p>
+      <button type="button" id="ov-retry" hidden data-i18n="kvmp.retry">Retry</button>
+    </div>
+  </div>
+</div>
+<script src="/static/i18n.js"></script>
+<script type="module" src="/static/kvm.js"></script>
+</body>
+</html>

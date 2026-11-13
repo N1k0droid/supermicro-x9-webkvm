@@ -1,0 +1,21 @@
+services:
+  webkvm:
+    build: .
+    image: supermicro-x9-webkvm:latest
+    container_name: supermicro-x9-webkvm
+    env_file: .env
+    ports:
+      # dashboard + KVM console in the browser (host port set with WEBKVM_HTTP_PORT)
+      - "${WEBKVM_HTTP_PORT:-8080}:8080"
+      # native VNC for TigerVNC & co. (only active when VNC_PASSWORD is set)
+      - "${VNC_HOST_PORT:-5900}:5900"
+    volumes:
+      - webkvm-data:/data
+    restart: unless-stopped
+    # The container must reach the BMC on TCP 80 (web login), TCP 5900 (KVM) and
+    # UDP 623 (IPMI). The default bridge network is fine when the host can reach the BMC
+    # network; otherwise use the host network (the "ports" lines are then ignored):
+    # network_mode: host
+
+volumes:
+  webkvm-data:
