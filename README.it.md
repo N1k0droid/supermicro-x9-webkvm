@@ -10,6 +10,8 @@ template Zabbix.
 Provato su una **X9SRL-F con firmware BMC 3.19**. Dovrebbe funzionare anche su altre schede X9
 con la stessa famiglia di firmware ATEN.
 
+![Console KVM nel browser](docs/screenshots/kvm-console.png)
+
 ## Perché
 
 Sulle schede X9 la console remota del BMC ("iKVM") esiste solo come **applet Java / file
@@ -42,7 +44,19 @@ dashboard, a Prometheus e a Zabbix.
                                      └─ comandi di alimentazione via IPMI
 ```
 
-### Limiti (del BMC, non di webkvm)
+## Schermate
+
+*Dati dimostrativi: la schermata del BIOS e i valori dei sensori sono generati per queste immagini.*
+
+| Dashboard | Registro eventi con filtri |
+|---|---|
+| [![Dashboard](docs/screenshots/dashboard.png)](docs/screenshots/dashboard.png) | [![Registro eventi](docs/screenshots/event-log.png)](docs/screenshots/event-log.png) |
+| **Menu alimentazione nella console** | **Tema scuro** |
+| [![Menu alimentazione](docs/screenshots/kvm-power-menu.png)](docs/screenshots/kvm-power-menu.png) | [![Tema scuro](docs/screenshots/dashboard-dark.png)](docs/screenshots/dashboard-dark.png) |
+| **Interfaccia in italiano** | **Login** |
+| [![Interfaccia in italiano](docs/screenshots/dashboard-it.png)](docs/screenshots/dashboard-it.png) | [![Login](docs/screenshots/login.png)](docs/screenshots/login.png) |
+
+## Limiti (del BMC, non di webkvm)
 
 - Il BMC cattura al massimo **1280x1024**. BIOS, POST e schermate di avvio sono molto sotto
   questo limite; un desktop a risoluzione più alta non si vede per intero. Per un desktop a

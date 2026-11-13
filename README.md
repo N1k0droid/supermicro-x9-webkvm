@@ -9,6 +9,8 @@ power control, Prometheus metrics and a Zabbix template.
 Tested on an **X9SRL-F with BMC firmware 3.19**. Other X9 boards with the same ATEN firmware
 family should work too.
 
+![KVM console in the browser](docs/screenshots/kvm-console.png)
+
 ## Why
 
 On X9 boards the BMC remote console ("iKVM") only exists as a **Java applet / JNLP file**.
@@ -38,7 +40,19 @@ Prometheus and Zabbix.
                                      └─ power commands over IPMI
 ```
 
-### Limits (of the BMC, not of webkvm)
+## Screenshots
+
+*Demo data: the BIOS screen and the sensor values are generated for these pictures.*
+
+| Dashboard | Event log with filters |
+|---|---|
+| [![Dashboard](docs/screenshots/dashboard.png)](docs/screenshots/dashboard.png) | [![Event log](docs/screenshots/event-log.png)](docs/screenshots/event-log.png) |
+| **Power menu in the console** | **Dark theme** |
+| [![Power menu](docs/screenshots/kvm-power-menu.png)](docs/screenshots/kvm-power-menu.png) | [![Dark theme](docs/screenshots/dashboard-dark.png)](docs/screenshots/dashboard-dark.png) |
+| **Italian interface** | **Login** |
+| [![Italian interface](docs/screenshots/dashboard-it.png)](docs/screenshots/dashboard-it.png) | [![Login](docs/screenshots/login.png)](docs/screenshots/login.png) |
+
+## Limits (of the BMC, not of webkvm)
 
 - The BMC captures at most **1280x1024**. BIOS, POST and boot screens are well below that;
   a desktop at a higher resolution is not fully visible. For a 1080p desktop use a remote
