@@ -3,20 +3,13 @@
   const $ = id => document.getElementById(id);
   const t = (k, v) => window.I18N.t(k, v);
   const TYPE_ORDER = ['temperature', 'fan', 'voltage', 'power', 'current', 'other', 'discrete'];
-  const POWER_ACTIONS = ['on', 'soft', 'reset', 'cycle', 'off'];
 
   let session = null;
   let sensors = [];
   let selected = null;
   let range = 3600;
-
-  function toast(msg) {
-    const el = $('toast');
-    el.textContent = msg;
-    el.classList.add('show');
-    clearTimeout(toast._t);
-    toast._t = setTimeout(() => el.classList.remove('show'), 4000);
-  }
+  let selEntries = [];
+  const toast = msg => window.showToast(msg);
 
   async function api(path, opts) {
     const r = await fetch(path, Object.assign({ credentials: 'same-origin' }, opts || {}));
@@ -189,16 +182,44 @@
     let data;
     try { data = await api('/api/v1/sel'); } catch (e) { return; }
     $('sel-count').textContent = t('sel.count', { n: data.count });
+    selEntries = data.entries || [];
+    fillSelSensors();
+    renderSel();
+  }
+
+  function fillSelSensors() {
+    const sel = $('sel-sensor');
+    const current = sel.value;
+    const names = [...new Set(selEntries.map(e => e.sensor).filter(Boolean))].sort();
+    sel.replaceChildren(new Option(t('sel.all_sensors'), ''), ...names.map(n => new Option(n, n)));
+    sel.value = names.includes(current) ? current : '';
+  }
+
+  function emptyRow(text) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 6; td.className = 'empty'; td.textContent = text;
+    tr.appendChild(td);
+    return tr;
+  }
+
+  function renderSel() {
     const body = $('sel');
-    if (!data.entries.length) {
-      const tr = document.createElement('tr');
-      const td = document.createElement('td');
-      td.colSpan = 6; td.className = 'empty'; td.textContent = t('sel.empty');
-      tr.appendChild(td);
-      body.replaceChildren(tr);
-      return;
-    }
-    body.replaceChildren(...data.entries.map(e => {
+    const words = $('sel-search').value.toLowerCase().split(/\s+/).filter(Boolean);
+    const state = $('sel-state').value;
+    const sensor = $('sel-sensor').value;
+    const rows = selEntries.filter(e => {
+      if (state && e.direction !== state) return false;
+      if (sensor && e.sensor !== sensor) return false;
+      if (!words.length) return true;
+      const hay = [e.id.toString(16), e.date, e.time, e.sensor, e.event, e.direction].join(' ').toLowerCase();
+      return words.every(w => hay.includes(w));
+    });
+    const filtered = words.length || state || sensor;
+    $('sel-shown').textContent = filtered ? t('sel.shown', { n: rows.length, m: selEntries.length }) : '';
+    if (!selEntries.length) { body.replaceChildren(emptyRow(t('sel.empty'))); return; }
+    if (!rows.length) { body.replaceChildren(emptyRow(t('sel.no_match'))); return; }
+    body.replaceChildren(...rows.map(e => {
       const tr = document.createElement('tr');
       for (const [v, mono] of [[e.id.toString(16), true], [e.date, true], [e.time, true],
                                [e.sensor], [e.event], [e.direction]]) {
@@ -211,50 +232,20 @@
     }));
   }
 
-  // --------------------------------------------------------------- power
-  function setupPower() {
-    if (!session.power_control) return;
-    const menu = $('power-menu');
-    menu.hidden = false;
-    const btn = $('power-btn');
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      menu.classList.toggle('open');
-      btn.setAttribute('aria-expanded', menu.classList.contains('open'));
-    });
-    document.addEventListener('click', () => { menu.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); });
-    menu.querySelectorAll('[data-action]').forEach(b => b.addEventListener('click', () => confirmPower(b.dataset.action)));
-  }
-
-  function confirmPower(action) {
-    if (!POWER_ACTIONS.includes(action)) return;
-    const dlg = $('confirm');
-    $('confirm-title').textContent = t(`power.confirm.${action}`);
-    $('confirm-text').textContent = t(`power.confirm.${action}.text`);
-    const yes = $('confirm-yes');
-    yes.className = action === 'on' ? 'btn-primary' : 'btn-danger solid';
-    yes.onclick = async () => {
-      dlg.close();
-      try {
-        const r = await api('/api/v1/power', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': session.csrf },
-          body: JSON.stringify({ action }),
-        });
-        toast(t('power.sent', { r: r.result || action }));
-        setTimeout(refreshState, 3000);
-      } catch (e) { toast(t('power.failed', { e: e.message })); }
-    };
-    $('confirm-no').onclick = () => dlg.close();
-    dlg.showModal();
-  }
-
   // ---------------------------------------------------------------- start
   async function init() {
     session = await api('/api/v1/session');
     $('host').textContent = session.bmc_host;
     document.title = `webkvm · ${session.bmc_host}`;
-    setupPower();
+    setupPower(session, () => setTimeout(refreshState, 3000));
+    let st;
+    $('sel-search').addEventListener('input', () => { clearTimeout(st); st = setTimeout(renderSel, 150); });
+    $('sel-state').addEventListener('change', renderSel);
+    $('sel-sensor').addEventListener('change', renderSel);
+    $('sel-clear').addEventListener('click', () => {
+      $('sel-search').value = ''; $('sel-state').value = ''; $('sel-sensor').value = '';
+      renderSel();
+    });
     $('chart-sensor').addEventListener('change', e => { selected = e.target.value; renderSensors(); loadChart(); });
     $('chart-range').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
       $('chart-range').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));

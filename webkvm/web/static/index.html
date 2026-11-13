@@ -25,7 +25,7 @@
         <button type="button" data-action="off" role="menuitem" class="btn-danger" data-i18n="power.off">Power off (forced)</button>
       </div>
     </div>
-    <button type="button" class="lang-btn" id="lang">IT</button>
+    <button type="button" class="lang-btn" id="lang">EN</button>
     <form method="post" action="/logout"><button type="submit" data-i18n="top.logout">Log out</button></form>
   </div>
 </header>
@@ -58,7 +58,19 @@
 
   <section class="panel">
     <h2><span data-i18n="sec.sel">Event log (SEL)</span> <span class="right hint" id="sel-count"></span></h2>
-    <div class="table-wrap">
+    <div class="sel-filters">
+      <input type="search" id="sel-search" data-i18n-placeholder="sel.search" data-i18n-aria="sel.search"
+             placeholder="Search sensor, event, date…" autocomplete="off">
+      <select id="sel-state" data-i18n-aria="sel.state" aria-label="State">
+        <option value="" data-i18n="sel.all_states">All states</option>
+        <option value="Asserted" data-i18n="sel.asserted">Asserted</option>
+        <option value="Deasserted" data-i18n="sel.deasserted">Deasserted</option>
+      </select>
+      <select id="sel-sensor" data-i18n-aria="sel.sensor" aria-label="Sensor"></select>
+      <button type="button" id="sel-clear" data-i18n="sel.clear">Clear filters</button>
+      <span class="hint" id="sel-shown"></span>
+    </div>
+    <div class="table-wrap sel-box">
       <table>
         <thead><tr><th>#</th><th data-i18n="sel.date">Date</th><th data-i18n="sel.time">Time</th>
           <th data-i18n="sel.sensor">Sensor</th><th data-i18n="sel.event">Event</th><th data-i18n="sel.state">State</th></tr></thead>
@@ -79,6 +91,7 @@
 <div class="toast" id="toast" role="status"></div>
 
 <script src="/static/i18n.js"></script>
+<script src="/static/power.js"></script>
 <script src="/static/chart.js"></script>
 <script src="/static/app.js"></script>
 </body>

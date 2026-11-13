@@ -3,7 +3,7 @@
  * Usage: elements with data-i18n="key" get their text replaced, data-i18n-title and
  * data-i18n-aria the matching attribute. Scripts call I18N.t('key', {var: value}).
  * Language: saved choice, otherwise the browser language (it* -> Italian, else English).
- * The button with id "lang" switches language and reloads the page. */
+ * The button with id "lang" shows the active language; a click switches and reloads. */
 (function () {
   'use strict';
 
@@ -52,6 +52,14 @@
       'sel.loading': 'Loading…',
       'sel.count': '{n} entries in the BMC',
       'sel.empty': 'No events recorded.',
+      'sel.search': 'Search sensor, event, date…',
+      'sel.all_states': 'All states',
+      'sel.asserted': 'Asserted',
+      'sel.deasserted': 'Deasserted',
+      'sel.shown': '{n} of {m} shown',
+      'sel.no_match': 'No event matches the filters.',
+      'sel.clear': 'Clear filters',
+      'sel.all_sensors': 'All sensors',
 
       'state.gateway_down': 'gateway unreachable',
       'state.bmc_up': 'BMC reachable',
@@ -172,6 +180,14 @@
       'sel.loading': 'Caricamento…',
       'sel.count': '{n} voci nel BMC',
       'sel.empty': 'Nessun evento registrato.',
+      'sel.search': 'Cerca sensore, evento, data…',
+      'sel.all_states': 'Tutti gli stati',
+      'sel.asserted': 'Attivato (Asserted)',
+      'sel.deasserted': 'Rientrato (Deasserted)',
+      'sel.shown': '{n} di {m} mostrati',
+      'sel.no_match': 'Nessun evento corrisponde ai filtri.',
+      'sel.clear': 'Azzera filtri',
+      'sel.all_sensors': 'Tutti i sensori',
 
       'state.gateway_down': 'gateway non raggiungibile',
       'state.bmc_up': 'BMC raggiungibile',
@@ -276,6 +292,7 @@
     r.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
     r.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = t(el.dataset.i18nTitle); });
     r.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
+    r.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
     document.documentElement.lang = lang;
   }
 
@@ -290,8 +307,10 @@
     apply();
     const btn = document.getElementById('lang');
     if (btn) {
-      btn.textContent = lang === 'it' ? 'EN' : 'IT';
-      btn.title = lang === 'it' ? 'Switch to English' : 'Passa all\'italiano';
+      // shows the ACTIVE language; the tooltip says what a click does
+      btn.textContent = lang.toUpperCase();
+      btn.title = lang === 'it' ? 'Passa all\'inglese' : 'Switch to Italian';
+      btn.setAttribute('aria-label', btn.title);
       btn.addEventListener('click', () => setLang(lang === 'it' ? 'en' : 'it'));
     }
   });

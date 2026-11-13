@@ -31,8 +31,27 @@
   <button type="button" id="scale" data-i18n-title="kvmp.scale_title" data-i18n="kvmp.fit">Fit</button>
   <button type="button" id="full" data-i18n="kvmp.full">Full screen</button>
   <button type="button" id="reconnect" data-i18n="kvmp.reconnect">Reconnect</button>
-  <button type="button" class="lang-btn" id="lang">IT</button>
+  <div class="menu" id="power-menu" hidden>
+    <button type="button" id="power-btn" aria-haspopup="true" aria-expanded="false" data-i18n="top.power_menu">Power ▾</button>
+    <div class="menu-list" role="menu">
+      <button type="button" data-action="on" role="menuitem" data-i18n="power.on">Power on</button>
+      <button type="button" data-action="soft" role="menuitem" data-i18n="power.soft">ACPI shutdown (soft)</button>
+      <button type="button" data-action="reset" role="menuitem" class="btn-danger" data-i18n="power.reset">Reset</button>
+      <button type="button" data-action="cycle" role="menuitem" class="btn-danger" data-i18n="power.cycle">Power cycle</button>
+      <button type="button" data-action="off" role="menuitem" class="btn-danger" data-i18n="power.off">Power off (forced)</button>
+    </div>
+  </div>
+  <button type="button" class="lang-btn" id="lang">EN</button>
 </div>
+<dialog id="confirm">
+  <h3 id="confirm-title"></h3>
+  <p id="confirm-text"></p>
+  <div class="row">
+    <button type="button" id="confirm-no" data-i18n="dlg.cancel">Cancel</button>
+    <button type="button" id="confirm-yes" class="btn-danger solid" data-i18n="dlg.confirm">Confirm</button>
+  </div>
+</dialog>
+<div class="toast" id="toast" role="status"></div>
 <div id="screen">
   <div class="overlay" id="overlay">
     <div class="box">
@@ -43,6 +62,7 @@
   </div>
 </div>
 <script src="/static/i18n.js"></script>
+<script src="/static/power.js"></script>
 <script type="module" src="/static/kvm.js"></script>
 </body>
 </html>

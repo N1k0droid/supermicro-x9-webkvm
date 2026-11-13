@@ -123,11 +123,21 @@ $('full').addEventListener('click', () => {
   else document.documentElement.requestFullscreen().catch(() => {});
 });
 const menu = $('keys-menu');
-$('keys-btn').addEventListener('click', e => { e.stopPropagation(); menu.classList.toggle('open'); });
+$('keys-btn').addEventListener('click', e => {
+  e.stopPropagation();
+  menu.classList.toggle('open');
+  window.fitMenu(menu);
+});
 document.addEventListener('click', () => menu.classList.remove('open'));
 menu.querySelectorAll('[data-keys]').forEach(b => b.addEventListener('click', () => {
   sendCombo(b.dataset.keys.split('+'));
 }));
+
+// power menu (same as the dashboard): shown only if power control is enabled
+fetch('/api/v1/session', { credentials: 'same-origin' })
+  .then(r => (r.ok ? r.json() : null))
+  .then(session => window.setupPower(session, () => rfb && rfb.focus()))
+  .catch(() => { /* no menu without a session */ });
 
 connect();
 pollBmc();

@@ -160,6 +160,16 @@ th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--bord
 th { color: var(--muted); font-weight: 600; font-size: 12px; }
 td.mono { font-family: var(--mono); font-size: 12px; white-space: nowrap; }
 .empty { color: var(--muted); }
+.sel-filters { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.sel-filters input, .sel-filters select {
+  font: inherit; font-size: 13px; padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--panel); color: var(--text); max-width: 100%;
+}
+.sel-filters input { flex: 1 1 220px; min-width: 0; }
+.sel-filters select { flex: 0 1 auto; }
+.sel-box { max-height: 420px; overflow: auto; border: 1px solid var(--border); border-radius: 6px; }
+.sel-box thead th { position: sticky; top: 0; background: var(--panel); z-index: 1;
+                    box-shadow: inset 0 -1px 0 var(--border); }
 
 /* ----------------------------------------------------------------- dialog */
 dialog {
